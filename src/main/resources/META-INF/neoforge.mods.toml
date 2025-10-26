@@ -1,0 +1,27 @@
+# src/main/resources/META-INF/neoforge.mods.toml
+modLoader="javafml"
+loaderVersion="[4,)"          # <-- required; your log shows fml_loader 4.0.41
+license="MIT"
+
+[[mods]]
+modId="minecraft_timer"
+version="${file.jarVersion}"
+displayName="ATM10 Timer"
+authors="DeveloperCarter"
+description='''
+A minimal server-only timer command for ATM10.
+'''
+
+[[dependencies.minecraft_timer]]
+modId="neoforge"
+mandatory=true
+versionRange="[21,)"          # any 21.x
+ordering="NONE"
+side="BOTH"
+
+[[dependencies.minecraft_timer]]
+modId="minecraft"
+mandatory=true
+versionRange="[1.21.1,1.22)"
+ordering="NONE"
+side="BOTH"
