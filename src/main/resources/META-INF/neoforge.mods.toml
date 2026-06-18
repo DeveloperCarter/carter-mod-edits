@@ -4,24 +4,34 @@ loaderVersion="[4,)"          # <-- required; your log shows fml_loader 4.0.41
 license="MIT"
 
 [[mods]]
-modId="minecraft_timer"
+modId="carter_mod"
 version="${file.jarVersion}"
-displayName="ATM10 Timer"
+displayName="Carter Mod Edits"
 authors="DeveloperCarter"
 description='''
-A minimal server-only timer command for ATM10.
+Carter's personal ATM10 tweaks: a server-side countdown timer command and a
+client-side FOV fix that stops Artifacts Running Shoes from zooming the camera.
 '''
 
-[[dependencies.minecraft_timer]]
+[[dependencies.carter_mod]]
 modId="neoforge"
 mandatory=true
 versionRange="[21,)"          # any 21.x
 ordering="NONE"
 side="BOTH"
 
-[[dependencies.minecraft_timer]]
+[[dependencies.carter_mod]]
 modId="minecraft"
 mandatory=true
 versionRange="[1.21.1,1.22)"
 ordering="NONE"
 side="BOTH"
+
+# Optional: only needed for the Running Shoes FOV fix. The patch checks
+# isLoaded("curios") at runtime and no-ops if Curios is absent.
+[[dependencies.carter_mod]]
+modId="curios"
+mandatory=false
+versionRange="[9,)"
+ordering="NONE"
+side="CLIENT"

@@ -7,7 +7,7 @@ import net.neoforged.bus.api.SubscribeEvent;
 
 @Mod(TimerMod.MODID)
 public class TimerMod {
-    public static final String MODID = "minecraft_timer";
+    public static final String MODID = "carter_mod";
 
     public TimerMod() {
         NeoForge.EVENT_BUS.register(this);
