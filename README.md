@@ -2,10 +2,11 @@
 
 A small NeoForge mod with personal quality-of-life tweaks for an
 [All the Mods 10](https://www.curseforge.com/minecraft/modpacks/all-the-mods-10)
-(ATM10) world. It bundles two unrelated features:
+(ATM10) world. It bundles three unrelated features:
 
 1. A server-side countdown **timer** command.
 2. A client-side **FOV fix** for the Artifacts "Running Shoes".
+3. A client-side **`/noclip`** toggle.
 
 | | |
 |---|---|
@@ -59,30 +60,54 @@ option in Artifacts to turn this off without also removing the speed bonus,
 because the FOV change is a vanilla side effect of the speed attribute.
 
 This patch fixes it surgically: it hooks `ViewportEvent.ComputeFov` and, while
-you are wearing the Running Shoes, resets the FOV back to your configured base
+the shoes' speed boost is active, resets the FOV back to your configured base
 FOV. **You keep the full speed boost; only the camera zoom is removed.**
 
-Detection covers both ways the shoes can be equipped:
+Instead of looking for the worn item, the patch detects the boost itself: the
+shoes apply a transient `MOVEMENT_SPEED` modifier with the id
+`artifacts:sprinting_speed` while you sprint. The patch checks for that modifier
+on the local player and, when present, overrides the computed FOV.
 
-- **Curios slot** (the normal case on ATM10) via the Curios API, and
-- a fallback scan of the vanilla armor slots.
-
-The whole feature is guarded so it is a no-op if Artifacts is not loaded, and
-the Curios path only runs when Curios is present.
+Detecting the attribute rather than the item means it works no matter which slot
+mod equips the shoes. This matters on ATM10: the shoes sit in an **Accessories**
+slot, not a Curios slot, so an item lookup through the Curios API never finds
+them. The attribute is the same either way, so there is no dependency on Curios,
+Accessories, or even Artifacts at compile time.
 
 Implementation: `patch/FovPatchClient` (client-only `@EventBusSubscriber`).
+
+### 3. Noclip toggle (client side)
+
+A `/noclip` command that lets you fly through blocks while staying in your
+current game mode (unlike `/gamemode spectator`, which makes you invisible and
+non-interactive).
+
+```
+/noclip
+```
+
+Run it once to enable, again to disable. While enabled you get creative-style
+flight and pass through blocks; suffocation is disabled automatically.
+
+Noclip for your own player has to be client-side, because the client computes
+its own movement collision, so this is a **client command** (it works from
+singleplayer and on LAN). It flips the vanilla `noPhysics` flag and turns on
+flight, announcing the flight to the server via `onUpdateAbilities()` so it is
+not rejected as illegal flying. On a dedicated server with movement anti-cheat
+it may rubber-band or get you kicked. Flight is only removed on disable if this
+toggle is what granted it, so it never strips flight from a creative player.
+
+Implementation: `patch/NoclipClient` (client-only `@EventBusSubscriber`).
 
 ---
 
 ## Dependencies
 
 - **NeoForge** 21.1.x and **Minecraft** 1.21.1 (required).
-- **Curios** 9.x (optional, client). Needed only so the FOV fix can detect
-  shoes worn in a Curios slot. If Curios is absent the mod still loads and the
-  fix falls back to checking armor slots.
 
-The FOV fix targets the item `artifacts:running_shoes`. If Artifacts is not
-installed, that half of the mod simply does nothing.
+No other mods are required to build or run. The FOV fix keys off the
+`artifacts:sprinting_speed` attribute modifier by id, so if Artifacts is not
+installed (or the shoes are not equipped) it simply never triggers.
 
 ---
 
@@ -109,6 +134,7 @@ src/main/java/com/DeveloperCarter/timer/
   TimerData.java         world-saved timer state
   patch/
     FovPatchClient.java  Running Shoes FOV fix
+    NoclipClient.java    /noclip toggle
 src/main/resources/META-INF/
   neoforge.mods.toml     mod metadata + dependencies
 ```

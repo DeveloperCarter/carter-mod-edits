@@ -26,12 +26,3 @@ mandatory=true
 versionRange="[1.21.1,1.22)"
 ordering="NONE"
 side="BOTH"
-
-# Optional: only needed for the Running Shoes FOV fix. The patch checks
-# isLoaded("curios") at runtime and no-ops if Curios is absent.
-[[dependencies.carter_mod]]
-modId="curios"
-mandatory=false
-versionRange="[9,)"
-ordering="NONE"
-side="CLIENT"
