@@ -1,0 +1,12 @@
+{
+  "required": true,
+  "minVersion": "0.8.5",
+  "package": "com.DeveloperCarter.timer.mixin",
+  "compatibilityLevel": "JAVA_21",
+  "client": [
+    "RunningShoesFovMixin"
+  ],
+  "injectors": {
+    "defaultRequire": 1
+  }
+}

@@ -1,50 +1,37 @@
 package com.DeveloperCarter.timer.patch;
 
 import com.DeveloperCarter.timer.TimerMod;
-import net.minecraft.client.Minecraft;
-import net.minecraft.client.player.LocalPlayer;
-import net.minecraft.resources.ResourceLocation;
-import net.minecraft.world.entity.ai.attributes.AttributeInstance;
-import net.minecraft.world.entity.ai.attributes.Attributes;
+import net.minecraft.commands.Commands;
+import net.minecraft.network.chat.Component;
 import net.neoforged.api.distmarker.Dist;
 import net.neoforged.bus.api.SubscribeEvent;
 import net.neoforged.fml.common.EventBusSubscriber;
-import net.neoforged.neoforge.client.event.ViewportEvent;
+import net.neoforged.neoforge.client.event.RegisterClientCommandsEvent;
 
 /**
- * Removes the camera "zoom" caused by the Artifacts Running Shoes.
+ * Registers the {@code /fovpatch} command, which toggles the Artifacts Running
+ * Shoes FOV fix on and off (default on).
  *
- * The shoes have no FOV setting of their own. The zoom is a vanilla side effect
- * of the movement-speed boost they apply while sprinting: GameRenderer.getFov
- * multiplies the base FOV by the player's speed-based modifier before the
- * ComputeFov event fires. The boost is a transient MOVEMENT_SPEED modifier with
- * the id "artifacts:sprinting_speed".
- *
- * Whenever that modifier is active we override the computed FOV back to the
- * player's configured base FOV, which cancels the speed-driven widening while
- * leaving the actual speed boost untouched.
- *
- * Looking at the attribute (rather than the worn item) means this works no
- * matter which slot mod the shoes are equipped through. On ATM10 they sit in an
- * Accessories slot, not a Curios slot, which is why the old item-lookup never
- * detected them.
+ * The actual FOV correction lives in
+ * {@code com.DeveloperCarter.timer.mixin.RunningShoesFovMixin}, which edits
+ * {@code AbstractClientPlayer.getFieldOfViewModifier} at the source so vanilla's
+ * own FOV smoothing handles sprint transitions. This class only owns the
+ * command + shared {@link FovToggleState} flag.
  */
 @EventBusSubscriber(modid = TimerMod.MODID, value = Dist.CLIENT)
 public final class FovPatchClient {
 
-    // Artifacts.id("sprinting_speed") -> the Running Shoes' sprint speed modifier.
-    private static final ResourceLocation RUNNING_SHOES_SPRINT_SPEED =
-            ResourceLocation.fromNamespaceAndPath("artifacts", "sprinting_speed");
-
     @SubscribeEvent
-    public static void onFov(ViewportEvent.ComputeFov event) {
-        if (!(event.getCamera().getEntity() instanceof LocalPlayer player)) return;
-
-        AttributeInstance speed = player.getAttribute(Attributes.MOVEMENT_SPEED);
-        if (speed == null) return;
-
-        if (speed.getModifier(RUNNING_SHOES_SPRINT_SPEED) != null) {
-            event.setFOV(Minecraft.getInstance().options.fov().get());
-        }
+    public static void onRegisterClientCommands(RegisterClientCommandsEvent event) {
+        event.getDispatcher().register(
+                Commands.literal("fovpatch").executes(ctx -> {
+                    FovToggleState.enabled = !FovToggleState.enabled;
+                    final boolean state = FovToggleState.enabled;
+                    ctx.getSource().sendSuccess(
+                            () -> Component.literal(
+                                    "Running Shoes FOV patch " + (state ? "enabled" : "disabled")),
+                            false);
+                    return 1;
+                }));
     }
 }

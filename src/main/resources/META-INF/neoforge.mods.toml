@@ -26,3 +26,7 @@ mandatory=true
 versionRange="[1.21.1,1.22)"
 ordering="NONE"
 side="BOTH"
+
+# Client-side FOV correction for the Running Shoes (see RunningShoesFovMixin).
+[[mixins]]
+config="carter_mod.mixins.json"

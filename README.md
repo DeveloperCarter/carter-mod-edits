@@ -59,22 +59,37 @@ cause a constant zoom-out that many people find nauseating. There is no config
 option in Artifacts to turn this off without also removing the speed bonus,
 because the FOV change is a vanilla side effect of the speed attribute.
 
-This patch fixes it surgically: it hooks `ViewportEvent.ComputeFov` and, while
-the shoes' speed boost is active, resets the FOV back to your configured base
-FOV. **You keep the full speed boost; only the camera zoom is removed.**
+This patch removes that zoom. **You keep the full speed boost; only the shoes'
+contribution to the FOV is removed.** Normal sprint widening still happens, so
+sprinting in the shoes feels the same FOV-wise as sprinting without them.
 
-Instead of looking for the worn item, the patch detects the boost itself: the
-shoes apply a transient `MOVEMENT_SPEED` modifier with the id
-`artifacts:sprinting_speed` while you sprint. The patch checks for that modifier
-on the local player and, when present, overrides the computed FOV.
+**Command**
 
-Detecting the attribute rather than the item means it works no matter which slot
-mod equips the shoes. This matters on ATM10: the shoes sit in an **Accessories**
-slot, not a Curios slot, so an item lookup through the Curios API never finds
-them. The attribute is the same either way, so there is no dependency on Curios,
-Accessories, or even Artifacts at compile time.
+```
+/fovpatch
+```
 
-Implementation: `patch/FovPatchClient` (client-only `@EventBusSubscriber`).
+Toggles the fix on/off (default on).
+
+**How it works.** A mixin edits `AbstractClientPlayer.getFieldOfViewModifier`.
+The shoes apply a transient `MOVEMENT_SPEED` modifier with the id
+`artifacts:sprinting_speed` while you sprint. When that modifier is present the
+mixin re-runs the speed calculation without it and scales the returned FOV
+modifier by the ratio, cancelling exactly the shoes' part.
+
+Two design points worth noting:
+
+- **Detect the attribute, not the item.** On ATM10 the shoes sit in an
+  **Accessories** slot, not a Curios slot, so an item lookup through the Curios
+  API never finds them. The attribute is the same regardless of slot mod, so
+  there is no dependency on Curios, Accessories, or even Artifacts.
+- **Correct at the source.** An earlier version overrode the final FOV after
+  vanilla had already computed and smoothed its internal speed-FOV value, which
+  popped when you started/stopped sprinting. Editing the modifier at the source
+  lets vanilla's own FOV smoothing ramp it in and out cleanly.
+
+Implementation: `mixin/RunningShoesFovMixin` (the fix), `patch/FovPatchClient`
+(the `/fovpatch` command), `patch/FovToggleState` (shared on/off flag).
 
 ### 3. Noclip toggle (client side)
 
